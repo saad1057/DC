@@ -1,4 +1,4 @@
-# BZip2 Data Compression Simulator - Phase 1
+# BZip2 Data Compression - Phase 1
 
 ## Overview
 
