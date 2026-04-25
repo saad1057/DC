@@ -3,31 +3,37 @@
 #include <string.h>
 #include "bwt.h"
 
+static size_t g_rotation_len = 0;
+
 int compare_rotations(const void *a, const void *b) {
     const Rotation *ra = (const Rotation *)a;
     const Rotation *rb = (const Rotation *)b;
-    return strcmp(ra->rotation, rb->rotation);
+    return memcmp((const unsigned char *)ra->rotation,
+                  (const unsigned char *)rb->rotation,
+                  g_rotation_len);
 }
 
 void bwt_encode(unsigned char *input, size_t len,
                 unsigned char *output, int *primary_index) {
+    if (len == 0) {
+        *primary_index = 0;
+        return;
+    }
+
+    g_rotation_len = len;
     // Build all rotations
     Rotation *rotations = malloc(len * sizeof(Rotation));
-    char *buf = malloc(len * 2 + 1);  // doubled buffer for rotation strings
+    unsigned char *buf = malloc(len * 2);  // doubled buffer for rotation bytes
 
     memcpy(buf, input, len);
     memcpy(buf + len, input, len);
-    buf[2 * len] = '\0';
 
     for (size_t i = 0; i < len; i++) {
-        rotations[i].rotation = buf + i; // points into doubled buffer
         rotations[i].index = (int)i;
 
-        // We need null-terminated strings of length len — copy them
-        char *rot = malloc(len + 1);
+        unsigned char *rot = malloc(len);
         memcpy(rot, buf + i, len);
-        rot[len] = '\0';
-        rotations[i].rotation = rot;
+        rotations[i].rotation = (char *)rot;
     }
 
     qsort(rotations, len, sizeof(Rotation), compare_rotations);
@@ -47,6 +53,10 @@ void bwt_encode(unsigned char *input, size_t len,
 
 void bwt_decode(unsigned char *input, size_t len,
                 int primary_index, unsigned char *output) {
+    if (len == 0) {
+        return;
+    }
+
     // Count frequency of each character
     int freq[256] = {0};
     for (size_t i = 0; i < len; i++)
