@@ -1,11 +1,15 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bwt.h"
 
+typedef struct {
+    char *rotation;
+    int index;
+} Rotation;
+
 static size_t g_rotation_len = 0;
 
-int compare_rotations(const void *a, const void *b) {
+static int compare_rotations(const void *a, const void *b) {
     const Rotation *ra = (const Rotation *)a;
     const Rotation *rb = (const Rotation *)b;
     return memcmp((const unsigned char *)ra->rotation,

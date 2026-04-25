@@ -9,6 +9,7 @@ static bool parse_bool(const char *val) {
 }
 
 Config load_config(const char *filename) {
+    /* Defaults are used when config.ini is missing or partial. */
     Config cfg = {
         .block_size       = 500000,
         .rle1_enabled     = true,
@@ -32,6 +33,7 @@ Config load_config(const char *filename) {
         if (comment) *comment = '\0';
 
         char key[128], val[128];
+        /* Expected line format: key = value */
         if (sscanf(line, " %127[^= ] = %127s", key, val) != 2)
             continue;
 

@@ -8,8 +8,10 @@
 #include "config.h"
 #include "rle1.h"
 
+/* File signature for our encoded container format. */
 #define MAGIC "BZS1"
 
+/* Metadata written before each encoded block payload. */
 typedef struct {
     uint32_t orig_size;
     uint32_t stage_size;
@@ -59,6 +61,7 @@ static int encode_file(const char *input_filename, const Config *cfg) {
         return 1;
     }
 
+    /* Container header: magic + number of blocks. */
     fwrite(MAGIC, 1, 4, out);
     {
         uint32_t block_count = (uint32_t)mgr->num_blocks;
@@ -73,6 +76,7 @@ static int encode_file(const char *input_filename, const Config *cfg) {
         unsigned char *rle_buf = NULL;
         size_t rle_size = stage_size;
         if (cfg->rle1_enabled) {
+            /* Worst case for packetized RLE is ~2x input size. */
             rle_buf = malloc(stage_size * 2 + 2);
             if (!rle_buf) {
                 fprintf(stderr, "Out of memory during RLE encode\n");
@@ -95,6 +99,7 @@ static int encode_file(const char *input_filename, const Config *cfg) {
         }
 
         int primary_index = 0;
+        /* BWT keeps length unchanged, but we must store primary_index. */
         bwt_encode(stage_data, stage_size, bwt_buf, &primary_index);
 
         EncodedBlockHeader hdr;
@@ -103,6 +108,7 @@ static int encode_file(const char *input_filename, const Config *cfg) {
         hdr.primary_index = (uint32_t)primary_index;
         hdr.final_size = (uint32_t)stage_size;
 
+        /* Per-block header followed by encoded payload bytes. */
         fwrite(&hdr, sizeof(hdr), 1, out);
         fwrite(bwt_buf, 1, stage_size, out);
 
@@ -178,6 +184,7 @@ static int decode_file(const char *encoded_filename, const Config *cfg) {
             return 1;
         }
 
+        /* Reverse transform order from encode path: BWT first, then RLE. */
         bwt_decode(encoded, hdr.stage_size, (int)hdr.primary_index, bwt_out);
 
         unsigned char *final_buf = bwt_out;
