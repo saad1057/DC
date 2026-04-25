@@ -1,0 +1,7 @@
+bzip2sim
+output.bin
+decoded.bin
+encoded.bin
+core
+core.*
+.vscode/
