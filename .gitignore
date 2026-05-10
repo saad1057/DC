@@ -1,3 +1,5 @@
+.DS_Store
+
 # Build artifacts
 bzip2sim
 bzip2sim.exe
